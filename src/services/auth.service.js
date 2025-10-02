@@ -13,9 +13,18 @@ export const hashPassword = async password => {
   }
 };
 
+export const comparePassword = async (password, hashedPassword) => {
+  try {
+    return await bcrypt.compare(password, hashedPassword);
+  } catch (e) {
+    logger.error(`Error comparing the password: ${e}`);
+    throw new Error('Password comparison error');
+  }
+};
+
 export const createUser = async ({ name, email, password, role = 'user' }) => {
   try {
-    const existingUser = db
+    const existingUser = await db
       .select()
       .from(users)
       .where(eq(users.email, email))
@@ -40,6 +49,39 @@ export const createUser = async ({ name, email, password, role = 'user' }) => {
      return newUser;
   } catch (e) {
     logger.error(`Error creating the user: ${e}`);
+    throw e;
+  }
+};
+
+export const authenticateUser = async ({ email, password }) => {
+  try {
+    const rows = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    if (!rows || rows.length === 0) {
+      throw new Error('User not found');
+    }
+
+    const userRecord = rows[0];
+
+    const isMatch = await comparePassword(password, userRecord.password);
+    if (!isMatch) {
+      throw new Error('Invalid credentials');
+    }
+
+    // Return sanitized user object similar to createUser
+    return {
+      id: userRecord.id,
+      name: userRecord.name,
+      email: userRecord.email,
+      role: userRecord.role,
+      created_at: userRecord.createdAt,
+    };
+  } catch (e) {
+    logger.error(`Error authenticating the user: ${e}`);
     throw e;
   }
 };

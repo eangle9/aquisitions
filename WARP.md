@@ -9,6 +9,7 @@ This is an **Acquisitions API** built with Express.js and Node.js, featuring a m
 ## Development Commands
 
 ### Core Development
+
 ```bash
 # Start development server with hot reload
 npm run dev
@@ -24,6 +25,7 @@ NODE_OPTIONS=--experimental-vm-modules jest tests/app.test.js
 ```
 
 ### Code Quality
+
 ```bash
 # Lint code
 npm run lint
@@ -39,6 +41,7 @@ npm run format:check
 ```
 
 ### Database Operations (Drizzle ORM)
+
 ```bash
 # Generate database migrations
 npm run db:generate
@@ -51,6 +54,7 @@ npm run db:studio
 ```
 
 ### Docker Environments
+
 ```bash
 # Development with Neon Local (ephemeral branches)
 npm run dev:docker
@@ -68,6 +72,7 @@ docker compose -f docker-compose.prod.yml up --build
 ## Architecture
 
 ### High-Level Structure
+
 The application follows a **layered architecture** with clear separation of concerns:
 
 - **Entry Point**: `src/index.js` → loads environment and starts server
@@ -78,6 +83,7 @@ The application follows a **layered architecture** with clear separation of conc
 ### Key Architectural Components
 
 **Path Aliases**: The project uses import maps for clean imports:
+
 - `#src/*` → `./src/*`
 - `#config/*` → `./src/config/*`
 - `#models/*` → `./src/models/*`
@@ -89,17 +95,20 @@ The application follows a **layered architecture** with clear separation of conc
 - `#validations/*` → `./src/validations/*`
 
 **Security Layer**: The application implements multiple security measures:
+
 - **Arcjet Integration**: Advanced security with bot detection, rate limiting, and shield protection
 - **Role-based Rate Limiting**: Different limits for admin (20/min), user (10/min), guest (5/min)
 - **Standard Security**: Helmet, CORS, cookie parsing, request logging with Winston
 
 **Database Architecture**:
+
 - **Neon Database**: Serverless PostgreSQL with branch-based development
 - **Drizzle ORM**: Type-safe SQL toolkit with schema-first approach
 - **Development**: Uses Neon Local proxy for ephemeral database branches
 - **Production**: Direct connection to Neon Cloud database
 
 ### Directory Structure
+
 ```
 src/
 ├── config/          # Database, logger, security configs
@@ -117,15 +126,18 @@ src/
 The project uses **dual-environment setup**:
 
 **Development** (`.env.development`):
+
 - Uses Neon Local proxy at `neon-local:5432`
 - Requires `NEON_API_KEY`, `NEON_PROJECT_ID`, `NEON_PARENT_BRANCH_ID`
 - Database URL: `postgres://neon:npg@neon-local:5432/${NEON_DATABASE}`
 
 **Production** (`.env.production`):
+
 - Direct Neon Cloud connection
 - Requires production `DATABASE_URL` with full Neon connection string
 
 **Key Environment Variables**:
+
 - `DATABASE_URL` - Database connection string
 - `ARCJET_KEY` - Security middleware API key
 - `JWT_SECRET` - JSON Web Token signing secret
@@ -137,6 +149,7 @@ The project uses **Drizzle ORM** with PostgreSQL:
 
 **Schema Location**: `src/models/` (e.g., `user.model.js`)
 **Migration Workflow**:
+
 1. Modify schema files in `src/models/`
 2. Generate migrations: `npm run db:generate`
 3. Apply migrations: `npm run db:migrate`
@@ -147,6 +160,7 @@ The project uses **Drizzle ORM** with PostgreSQL:
 ## Security Implementation
 
 The application integrates **Arcjet** for comprehensive security:
+
 - **Bot Detection**: Blocks automated requests (allows search engines and previews)
 - **Rate Limiting**: Sliding window approach with role-based limits
 - **Shield Protection**: Advanced request filtering
@@ -162,6 +176,7 @@ Rate limiting is dynamically applied based on user role from JWT tokens, with fa
 **Coverage**: Enabled by default, output to `coverage/`
 
 **Running Tests**:
+
 ```bash
 # All tests
 npm test
@@ -176,15 +191,18 @@ npm test -- --coverage
 ## Docker Architecture
 
 **Multi-stage Dockerfile**:
+
 - `development` target: includes dev dependencies, runs `npm run dev`
 - `production` target: production dependencies only, runs `npm start`
 
 **Development Environment** (`docker-compose.dev.yml`):
+
 - Neon Local proxy service with ephemeral branches
 - Application with hot reload (source mounted as volumes)
 - Health checks for both services
 
 **Production Environment** (`docker-compose.prod.yml`):
+
 - Single application container
 - Resource limits and restart policies
 - Direct Neon Cloud connection
@@ -192,6 +210,7 @@ npm test -- --coverage
 ## Code Standards
 
 **Linting**: ESLint with recommended rules plus custom standards:
+
 - 2-space indentation
 - Single quotes
 - Semicolons required

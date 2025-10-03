@@ -39,12 +39,10 @@ const securityMiddleware = async (req, res, next) => {
           ua: req.get('User-Agent'),
           path: req.path,
         });
-        return res
-          .status(403)
-          .json({
-            error: 'Forbidden',
-            message: 'Automated request is not allowed',
-          });
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'Automated request is not allowed',
+        });
       }
 
       if (reason === 'SHIELD') {
@@ -53,12 +51,10 @@ const securityMiddleware = async (req, res, next) => {
           ua: req.get('User-Agent'),
           path: req.path,
         });
-        return res
-          .status(403)
-          .json({
-            error: 'Forbidden',
-            message: 'Request blocked by security policy',
-          });
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'Request blocked by security policy',
+        });
       }
 
       if (reason === 'RATE_LIMIT') {
@@ -91,12 +87,10 @@ const securityMiddleware = async (req, res, next) => {
     // next();
   } catch (e) {
     console.error('Arcjet middleware error', e);
-    res
-      .status(500)
-      .json({
-        error: 'Internal server error',
-        message: 'Something went wrong with security middleware',
-      });
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Something went wrong with security middleware',
+    });
   }
 };
 

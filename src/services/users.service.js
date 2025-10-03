@@ -18,4 +18,4 @@ export const getAllUsers = async () => {
     logger.error(`error getting users: ${e}`);
     throw e;
   }
-}
+};

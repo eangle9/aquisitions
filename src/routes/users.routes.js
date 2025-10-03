@@ -1,5 +1,8 @@
 import { fetchAllUsers } from '#controllers/users.controller.js';
-import { authenticationToken, requireRole } from '#middleware/auth.middleware.js';
+import {
+  authenticationToken,
+  requireRole,
+} from '#middleware/auth.middleware.js';
 import express from 'express';
 
 const router = express.Router();

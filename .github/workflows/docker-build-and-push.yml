@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: kubernetes-demo-api
+  IMAGE_NAME: acquisitions-api
 
 jobs:
   build-and-push:
@@ -41,14 +41,32 @@ jobs:
             echo "::notice::Please add DOCKER_PASSWORD secret to your repository settings"
             exit 1
           fi
+          
+          # Check for whitespace issues in username
+          USERNAME_RAW="${{ secrets.DOCKER_USERNAME }}"
+          USERNAME_CLEAN=$(echo "${USERNAME_RAW}" | tr -d '\n\r\t ' | xargs)
+          USERNAME_LENGTH=${#USERNAME_RAW}
+          USERNAME_CLEAN_LENGTH=${#USERNAME_CLEAN}
+          
+          echo "Raw username length: ${USERNAME_LENGTH}"
+          echo "Clean username length: ${USERNAME_CLEAN_LENGTH}"
+          
+          if [ "${USERNAME_LENGTH}" -ne "${USERNAME_CLEAN_LENGTH}" ]; then
+            echo "::warning::Docker username contains whitespace characters that will be trimmed"
+            echo "::notice::Consider updating your DOCKER_USERNAME secret to remove extra whitespace"
+          fi
+          
           echo "Docker credentials are properly configured"
 
       - name: Set image name
         id: image
         run: |
-          IMAGE_FULL_NAME="${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}"
+          # Trim whitespace from username and build image name
+          DOCKER_USER=$(echo "${{ secrets.DOCKER_USERNAME }}" | tr -d '\n\r\t ' | xargs)
+          IMAGE_FULL_NAME="${{ env.REGISTRY }}/${DOCKER_USER}/${{ env.IMAGE_NAME }}"
           echo "image_name=${IMAGE_FULL_NAME}" >> $GITHUB_OUTPUT
           echo "::notice::Building image: ${IMAGE_FULL_NAME}"
+          echo "::notice::Docker username (trimmed): '${DOCKER_USER}'"
 
       - name: Extract metadata
         id: meta

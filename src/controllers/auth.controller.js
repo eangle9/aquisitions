@@ -18,9 +18,13 @@ export const signup = async (req, res, next) => {
 
     const { name, email, password, role } = validationResult.data;
 
-    const user = await createUser({name, email, password, role});
+    const user = await createUser({ name, email, password, role });
 
-    const token = tokens.sign({id: user.id, email: user.email, role: user.role});
+    const token = tokens.sign({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     cookies.set(res, 'token', token);
 
@@ -33,7 +37,7 @@ export const signup = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        created_at: user.created_at
+        created_at: user.created_at,
       },
     });
   } catch (e) {
@@ -62,7 +66,11 @@ export const login = async (req, res, next) => {
 
     const user = await authenticateUser({ email, password });
 
-    const token = tokens.sign({ id: user.id, email: user.email, role: user.role });
+    const token = tokens.sign({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     cookies.set(res, 'token', token);
 

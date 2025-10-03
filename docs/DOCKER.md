@@ -22,21 +22,21 @@ This repository includes a complete Docker setup for running the Express API wit
 
 Neon Local creates an ephemeral branch when the container starts and deletes it when the container stops. Your app connects to the local Postgres interface at `neon-local:5432` inside the compose network.
 
-1) Fill out `.env.development` with your Neon credentials:
+1. Fill out `.env.development` with your Neon credentials:
 
 - NEON_API_KEY
 - NEON_PROJECT_ID
 - NEON_PARENT_BRANCH_ID (the parent branch to clone)
 - Optionally set `NEON_DATABASE` (defaults to `neondb` in the compose fallback)
 
-2) Start the stack:
+2. Start the stack:
 
 ```bash
 # build app image and start Neon Local + app
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-3) The API is available at http://localhost:3000 and the Neon Local proxy at localhost:5432 (optional host exposure).
+3. The API is available at http://localhost:3000 and the Neon Local proxy at localhost:5432 (optional host exposure).
 
 ### Important for @neondatabase/serverless in dev
 
@@ -74,7 +74,7 @@ services:
       - ./.neon_local/:/tmp/.neon_local
       - ./.git/HEAD:/tmp/.git/HEAD:ro,consistent
     environment:
-      DELETE_BRANCH: "false"
+      DELETE_BRANCH: 'false'
 ```
 
 Be sure to add `.neon_local/` to `.gitignore`.
@@ -83,14 +83,14 @@ Be sure to add `.neon_local/` to `.gitignore`.
 
 No Neon Local proxy is used. Provide your Neon Cloud `DATABASE_URL` via environment variables or secrets. The production compose runs only the app container.
 
-1) Put placeholders in `.env.production` (or configure via your platform’s secret manager):
+1. Put placeholders in `.env.production` (or configure via your platform’s secret manager):
 
 ```bash
 DATABASE_URL=postgresql://<user>:<password>@<host>.neon.tech/<db>?sslmode=require
 JWT_SECRET=<your_jwt_secret>
 ```
 
-2) Start locally for testing:
+2. Start locally for testing:
 
 ```bash
 docker compose -f docker-compose.prod.yml up --build

@@ -15,11 +15,11 @@ const securityMiddleware = async (req, res, next) => {
                 message = 'Admin request limit exceeded (20 per minute). Slow down'
             break;
             case 'user':
-                limit = 20
+                limit = 10
                 message = 'User request limit exceeded (10 per minute). Slow down'
             break;
             case 'guest':
-                limit = 20
+                limit = 5
                 message = 'Guest request limit exceeded (5 per minute). Slow down'
             break;
         }
@@ -27,21 +27,42 @@ const securityMiddleware = async (req, res, next) => {
         const client = aj.withRule(slidingWindow({mode: 'LIVE', interval: '1m', max: limit}));
 
         const decision = await client.protect(req);
+        console.log("Decision object:", JSON.stringify(decision, null, 2));
+        if (decision.conclusion === "DENY") {
+            const reason = decision.reason?.type;
+          
+            if (reason === "BOT") {
+              logger.warn("Bot request blocked", { ip: req.ip, ua: req.get("User-Agent"), path: req.path });
+              return res.status(403).json({ error: "Forbidden", message: "Automated request is not allowed" });
+            }
+          
+            if (reason === "SHIELD") {
+              logger.warn("Shield request blocked", { ip: req.ip, ua: req.get("User-Agent"), path: req.path });
+              return res.status(403).json({ error: "Forbidden", message: "Request blocked by security policy" });
+            }
+          
+            if (reason === "RATE_LIMIT") {
+              logger.warn("Rate limit exceeded", { ip: req.ip, ua: req.get("User-Agent"), path: req.path });
+              return res.status(429).json({ error: "Too Many Requests", message: "Slow down" });
+            }
+          }
+          
+          next();
 
-        if (decision.isDenied && decision.reason.isBot) {
-            logger.warn('Bot request blocked', {ip: req.ip, userAgent: req.get('User-Agent'), path: req.path});
-            return res.status(403).json({error: 'Forbidden', message: "Automated request is not allowed"});
-        }
-        if (decision.isDenied && decision.reason.isShield) {
-            logger.warn('Shield request blocked', {ip: req.ip, userAgent: req.get('User-Agent'), path: req.path, method: req.method});
-            return res.status(403).json({error: 'Forbidden', message: "Request blocked by security policy"});
-        }
-        if (decision.isDenied && decision.reason.isRateLimit) {
-            logger.warn('Rate limit exceeded', {ip: req.ip, userAgent: req.get('User-Agent'), path: req.path});
-            return res.status(403).json({error: 'Forbidden', message: "Too many requests"})
-        }
+        // if (decision.isDenied && decision.reason.isBot) {
+        //     logger.warn('Bot request blocked', {ip: req.ip, userAgent: req.get('User-Agent'), path: req.path});
+        //     return res.status(403).json({error: 'Forbidden', message: "Automated request is not allowed"});
+        // }
+        // if (decision.isDenied && decision.reason.isShield) {
+        //     logger.warn('Shield request blocked', {ip: req.ip, userAgent: req.get('User-Agent'), path: req.path, method: req.method});
+        //     return res.status(403).json({error: 'Forbidden', message: "Request blocked by security policy"});
+        // }
+        // if (decision.isDenied && decision.reason.isRateLimit) {
+        //     logger.warn('Rate limit exceeded', {ip: req.ip, userAgent: req.get('User-Agent'), path: req.path});
+        //     return res.status(403).json({error: 'Forbidden', message: "Too many requests"})
+        // }
         
-        next();
+        // next();
     } catch(e) {
         console.error('Arcjet middleware error', e);
         res.status(500).json({error: "Internal server error", message: "Something went wrong with security middleware"});

@@ -1,0 +1,96 @@
+name: Tests and Coverage
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        id: test
+        env:
+          NODE_ENV: test
+          NODE_OPTIONS: --experimental-vm-modules
+          DATABASE_URL: postgres://test:test@localhost:5432/test_db
+          JWT_SECRET: test-jwt-secret-key-for-ci
+          ARCJET_KEY: test-arcjet-key-for-ci
+        run: |
+          echo "::group::Running Jest Tests"
+          if ! npm test; then
+            echo "::error::Tests failed! Please check the test results above."
+            echo "test_failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "::endgroup::"
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: coverage/
+          retention-days: 30
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f coverage/coverage-summary.json ]; then
+            # Extract coverage data if available
+            LINES_PCT=$(cat coverage/coverage-summary.json | grep -o '"lines":{"total":[0-9]*,"covered":[0-9]*,"skipped":[0-9]*,"pct":[0-9.]*' | grep -o '"pct":[0-9.]*' | cut -d: -f2)
+            STATEMENTS_PCT=$(cat coverage/coverage-summary.json | grep -o '"statements":{"total":[0-9]*,"covered":[0-9]*,"skipped":[0-9]*,"pct":[0-9.]*' | grep -o '"pct":[0-9.]*' | cut -d: -f2)
+            FUNCTIONS_PCT=$(cat coverage/coverage-summary.json | grep -o '"functions":{"total":[0-9]*,"covered":[0-9]*,"skipped":[0-9]*,"pct":[0-9.]*' | grep -o '"pct":[0-9.]*' | cut -d: -f2)
+            BRANCHES_PCT=$(cat coverage/coverage-summary.json | grep -o '"branches":{"total":[0-9]*,"covered":[0-9]*,"skipped":[0-9]*,"pct":[0-9.]*' | grep -o '"pct":[0-9.]*' | cut -d: -f2)
+            
+            echo "### 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Lines | ${LINES_PCT}% |" >> $GITHUB_STEP_SUMMARY
+            echo "| Statements | ${STATEMENTS_PCT}% |" >> $GITHUB_STEP_SUMMARY
+            echo "| Functions | ${FUNCTIONS_PCT}% |" >> $GITHUB_STEP_SUMMARY
+            echo "| Branches | ${BRANCHES_PCT}% |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ steps.test.outputs.test_failed }}" = "true" ]; then
+            echo "❌ **Tests Failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Some tests are failing. Please review the test output above and:" >> $GITHUB_STEP_SUMMARY
+            echo "- Fix failing tests locally" >> $GITHUB_STEP_SUMMARY
+            echo "- Run \`npm test\` to verify fixes" >> $GITHUB_STEP_SUMMARY
+            echo "- Commit and push your changes" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **All Tests Passed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Great job! All tests are passing successfully." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 Coverage reports have been uploaded as artifacts (available for 30 days)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Annotate test failures
+        if: failure() && steps.test.outputs.test_failed == 'true'
+        run: |
+          echo "::error::Test suite failed"
+          echo "::notice::Run 'npm test' locally to see detailed error information"
+          echo "::notice::Check the Jest output above for specific test failures"
+          echo "::notice::Coverage report artifacts are available for download"

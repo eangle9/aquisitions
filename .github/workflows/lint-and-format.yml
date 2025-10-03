@@ -1,0 +1,63 @@
+name: Code Quality - Lint and Format
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        id: eslint
+        run: |
+          echo "::group::ESLint Check"
+          if ! npm run lint; then
+            echo "::error::ESLint found issues in your code"
+            echo "::notice::Run 'npm run lint:fix' locally to automatically fix some issues"
+            echo "eslint_failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "::endgroup::"
+
+      - name: Run Prettier Format Check
+        id: prettier
+        run: |
+          echo "::group::Prettier Format Check"
+          if ! npm run format:check; then
+            echo "::error::Code formatting issues found"
+            echo "::notice::Run 'npm run format' locally to fix formatting issues"
+            echo "prettier_failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "::endgroup::"
+
+      - name: Code Quality Summary
+        if: success()
+        run: |
+          echo "::notice::✅ All code quality checks passed!"
+          echo "::notice::Your code follows the project's linting and formatting standards."
+
+      - name: Failure Summary
+        if: failure()
+        run: |
+          echo "::error::❌ Code quality checks failed"
+          echo "::notice::Please fix the issues and run the following commands locally:"
+          echo "::notice::  - npm run lint:fix (to fix ESLint issues)"
+          echo "::notice::  - npm run format (to fix formatting issues)"
+          echo "::notice::Then commit and push your changes."

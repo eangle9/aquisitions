@@ -38,6 +38,7 @@ const securityMiddleware = async (req, res, next) => {
           ip: req.ip,
           ua: req.get('User-Agent'),
           path: req.path,
+          message,
         });
         return res.status(403).json({
           error: 'Forbidden',
@@ -50,6 +51,7 @@ const securityMiddleware = async (req, res, next) => {
           ip: req.ip,
           ua: req.get('User-Agent'),
           path: req.path,
+          message,
         });
         return res.status(403).json({
           error: 'Forbidden',
@@ -62,6 +64,7 @@ const securityMiddleware = async (req, res, next) => {
           ip: req.ip,
           ua: req.get('User-Agent'),
           path: req.path,
+          message,
         });
         return res
           .status(429)

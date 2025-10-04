@@ -41,21 +41,21 @@ jobs:
             echo "::notice::Please add DOCKER_PASSWORD secret to your repository settings"
             exit 1
           fi
-          
+
           # Check for whitespace issues in username
           USERNAME_RAW="${{ secrets.DOCKER_USERNAME }}"
           USERNAME_CLEAN=$(echo "${USERNAME_RAW}" | tr -d '\n\r\t ' | xargs)
           USERNAME_LENGTH=${#USERNAME_RAW}
           USERNAME_CLEAN_LENGTH=${#USERNAME_CLEAN}
-          
+
           echo "Raw username length: ${USERNAME_LENGTH}"
           echo "Clean username length: ${USERNAME_CLEAN_LENGTH}"
-          
+
           if [ "${USERNAME_LENGTH}" -ne "${USERNAME_CLEAN_LENGTH}" ]; then
             echo "::warning::Docker username contains whitespace characters that will be trimmed"
             echo "::notice::Consider updating your DOCKER_USERNAME secret to remove extra whitespace"
           fi
-          
+
           echo "Docker credentials are properly configured"
 
       - name: Set image name
